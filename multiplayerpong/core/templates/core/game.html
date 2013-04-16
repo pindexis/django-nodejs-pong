@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	{% load staticfiles %}
+    <link    rel="stylesheet"       href="{% static 'core/game.css' %}" />
+	<script  type="text/javascript" src="{% static 'core/jquery-1.8.3.min.js' %}"></script>
+	
+	<script  type="text/javascript" src="http://127.0.0.1:4000/socket.io/socket.io.js"> </script>
+	<script  type="text/javascript" src="{% static 'gamelogic.js' %}"> </script>
+	<script  type="text/javascript" src="{% static 'core/pongclient.js' %}"></script>
+    <title>{% block title %}Ping Pong{% endblock %}</title>
+</head>
+
+<body>
+
+	<div id="clientstate">  </div>
+	<div id="game">
+    <div id="game-header">
+        {% block header %}
+			
+			<div id="player1-container" > <span id="player1-username"></span>: <span id="player1-score"></span></div>
+			<div id="player2-container" > <span id="player2-username"></span>: <span id="player2-score"></span></div>
+
+        {% endblock %}
+    </div>
+
+		<div id="game-field">		
+			<div id="left-paddle" class="paddle"></div>		
+			<div id="right-paddle" class="paddle" ></div>
+			<div id="ball"></div>
+		</div>
+    </div>
+	
+</body>
+</html>

@@ -1,0 +1,51 @@
+body{
+ width: 100%; height: 100%; margin: 0px; padding: 0px;
+}
+
+#game-header {
+height: 30px;
+background-color: #6BB300;
+}
+
+#player1-container{
+padding: 3px;
+font-weight: bold;
+color: white;
+float: left;
+}
+
+#player2-container{
+padding: 3px;
+font-weight: bold;
+color: white;
+float: right;
+}
+
+#game-field{
+cursor: none;
+background-color: #EEF;
+display: block;
+margin: auto;
+border: 1px solid black;
+ box-shadow: inset 0 0 3px #000;
+  border-radius: 5px;
+}
+
+.paddle{
+    background-color: #BF0000;
+    border: 2px solid black;
+position: relative;
+}
+
+#clientstate{
+width:200px;
+margin:auto;
+font-weight: bold;
+}
+#ball{
+display: block;
+  border-radius: 50%;
+  background-color: #3673cf;
+  box-shadow: inset -5px -5px 5px rgba(0,0,0,.6), 0px 0px 2px rgba(0,0,0,.04);
+
+}

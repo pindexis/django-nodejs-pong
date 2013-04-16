@@ -1,0 +1,20 @@
+
+	{% if message %}
+		<span>{{message}}</span>
+	{% endif %}
+{% if username %}
+    <div>
+	{{username}}
+	<strong>wins:</strong> {{wins}}
+	<strong>losses:</strong> {{losses}}
+	<form id="user" action="/user/" method="post">{% csrf_token %}
+	<input type="submit" name="submit" value="logout" />
+	</form>
+	</div>
+{% else %}
+    <form id="user" action="/user/" method="post">{% csrf_token %}
+	{{ form.as_p }}
+	<input type="submit" name="submit" value="login" />
+	<input type="submit" name="submit" value="register" />
+	</form>
+{% endif %}
