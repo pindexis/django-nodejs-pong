@@ -11,7 +11,7 @@ var PADDLEHEIGHT = 100;
 var PADDLESPEED = 8;
 
 var BALLSPEED = 5;
-var BALLRADIUS = 6;
+var BALLRADIUS = 5;
 
 
 function Player(_id, _pusername, _paddleX) {
@@ -25,7 +25,7 @@ function Player(_id, _pusername, _paddleX) {
     var paddleDirY;
 
     this.resetPaddle = function () {
-        paddleY = (COURTWIDTH - PADDLEHEIGHT) / 2;
+        paddleY = (COURTHEIGHT - PADDLEHEIGHT) / 2;
         paddleDirY = 0;
     };
 
@@ -34,8 +34,8 @@ function Player(_id, _pusername, _paddleX) {
     };
 
     this.DirectionUp = function () {
-        if (paddleDirY != -1) {
-            paddleDirY = -1;
+        if (paddleDirY != 1) {
+            paddleDirY = 1;
             return true;
         } else {
             return false;
@@ -43,8 +43,8 @@ function Player(_id, _pusername, _paddleX) {
     };
 
     this.DirectionDown = function () {
-        if (paddleDirY != 1) {
-            paddleDirY = 1;
+        if (paddleDirY != -1) {
+            paddleDirY = -1;
             return true;
         } else {
             return false;
@@ -102,21 +102,19 @@ function Ball() {
 
     var x;
     var y;
-    var dirX;
-    var dirY;
+    var dirR;
     var speed;
 
     this.reset = function () {
-        x = COURTWIDTH / 2;
-        y = COURTHEIGHT / 2;
-        dirX = 1;
-        dirY = 1;
+        x = COURTWIDTH / 2 - BALLRADIUS;
+        y = COURTHEIGHT / 2 - BALLRADIUS;
+        dirR = Math.PI / 6;
         speed = BALLSPEED;
     };
 
     this.regularUpdate = function (elapsed) {
-        x = x + dirX * speed * (elapsed / UPDATEINTERVALL);
-        y = y + dirY * speed * (elapsed / UPDATEINTERVALL);
+        x = x + Math.cos(dirR) * speed * (elapsed / UPDATEINTERVALL);
+        y = y + Math.sin(dirR) * speed * (elapsed / UPDATEINTERVALL);
 		
     };
 	
@@ -133,27 +131,24 @@ function Ball() {
 
     };
 
-    this.bounceVertically = function () {
-		dirX = dirX * -1;
-		this.raiseSpeed();
-    };
+	this.bounce =  function(angle){
+		if( (dirR % (Math.PI / 2)) >= Math.PI / 4 ) 
+			dirR = dirR + (2 * Math.PI - angle);
+		else
+			dirR = dirR + angle;	
+		dirR = dirR % (2 * Math.PI);	
+		this.raiseSpeed();	
+	};
 
-    this.bounceHorizentally = function () {
-		dirY = dirY * -1;
-		this.raiseSpeed();
-    };
-
-	// no used for the moment
     this.raiseSpeed = function () {
 		if(speed < 10)
         	speed++;
     };
 
-    this.setBallVars = function (_x, _y, _dirX, _dirY, _speed) {
+    this.setBallVars = function (_x, _y, _dirR, _speed) {
         this.setX(_x);
         this.setY(_y);
-        dirX = _dirX;
-        dirY = _dirY;
+        dirR = _dirR;
         speed = _speed;
     };
 
@@ -161,7 +156,7 @@ function Ball() {
         return x;
     };
 	this.setX = function(_x) {
-		if(x >= 0 && x <= COURTWIDTH)
+		if(_x >= 0 && _x <= COURTWIDTH)
 			x = _x;
 	};
 
@@ -169,20 +164,17 @@ function Ball() {
         return y;
     };
 	this.setY = function(_y) {
-		if(y >= 0 && y <= COURTHEIGHT)
+		if(_y >= 0 && _y <= COURTHEIGHT)
 			y = _y;
 	};
 
     this.getSpeed = function () {
         return speed;
     };
-    this.getDirX = function () {
-        return dirX;
+    this.getDirR = function () {
+        return dirR;
     };
-    this.getDirY = function () {
-        return dirY;
-    };
-
+    
 
     this.reset();
 }
@@ -227,8 +219,7 @@ function Game(player1username, player2username) {
 
             ballX: ball.getX(),
             ballY: ball.getY(),
-            ballDirX: ball.getDirX(),
-            ballDirY: ball.getDirY(),
+            ballDirR: ball.getDirR(),
             ballSpeed: ball.getSpeed()
         };
     };
@@ -246,9 +237,14 @@ function Game(player1username, player2username) {
 		//assert(gameState === GameState.ACTIVE || gameState === GameState.PAUSED);
 		//assert(vars.gameState === GameState.ACTIVE || vars.gameState === GameState.PAUSED);
 		//gameState == vars.gameState
+		console.log("Current ballx= " + ball.getX() + " server ballx= " + vars.ballX); 
+		console.log("Current bally= " + ball.getY() + " server bally= " + vars.ballY);
+		console.log("Current ballR= " + ball.getDirR() + " server ballR= " + vars.ballDirR);
+		console.log("Current Player1Paddle= " + player1.getPaddleY() + " server ballx= " + vars.player1PaddleY);
+		console.log("Current Player2Paddle= " + player2.getPaddleY() + " server ballx= " + vars.player2PaddleY);
         player1.setPlayerVars(vars.player1Score, vars.player1PaddleY, vars.player1PaddleDirY);
         player2.setPlayerVars(vars.player2Score, vars.player2PaddleY, vars.player2PaddleDirY);
-        ball.setBallVars(vars.ballX, vars.ballY, vars.ballDirX,vars.ballDirY, vars.ballSpeed);
+        ball.setBallVars(vars.ballX, vars.ballY, vars.ballDirR, vars.ballSpeed);
     };
 
 	function finishRound(winner) {
@@ -263,39 +259,40 @@ function Game(player1username, player2username) {
     this.updateGameState = function() {
 		if(gameState !== GameState.ACTIVE)
 			return;
-		var	elapsed =  new Date().getTime() - lastUpdate;
+		var currentTime = new Date().getTime()
+		var	elapsed = currentTime  - lastUpdate;
 
 		ball.regularUpdate(elapsed);
 		player1.regularUpdate(elapsed);
         player2.regularUpdate(elapsed);
-
+		
         if (ball.getX() <= 0)
             finishRound(player2);
         else if (ball.getX() + 2 * BALLRADIUS >= COURTWIDTH)
             finishRound(player1);
         else {
-
+			var ballDirR = ball.getDirR();
             if (ball.getY() <= 0){
-                ball.bounceHorizentally();
+                ball.bounce(Math.PI / 2 );
 				ball.setY(0);
 			}else if (ball.getY() + 2 * BALLRADIUS >= COURTHEIGHT){
-                ball.bounceHorizentally();
+				ball.bounce(Math.PI / 2 );
 				ball.setY(COURTHEIGHT - 2 * BALLRADIUS);
 			}
 
             if (ball.checkCollision(player1.getPaddleX(), player1.getPaddleY(), PADDLEWIDTH, PADDLEHEIGHT)){
-				ball.bounceVertically();
+				ball.bounce(Math.PI / 2 );
 				ball.setX(PADDLEWIDTH);
 			}
             else if (ball.checkCollision(player2.getPaddleX(), player2.getPaddleY(), PADDLEWIDTH, PADDLEHEIGHT)){
-                ball.bounceVertically();
+				ball.bounce(Math.PI / 2 );
 				ball.setX(COURTWIDTH - PADDLEWIDTH - 2 * BALLRADIUS);
 			}
 
             
         }
 
-		lastUpdate = new Date().getTime();
+		lastUpdate = currentTime;
     };
 	
 

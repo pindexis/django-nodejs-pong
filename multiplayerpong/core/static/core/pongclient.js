@@ -115,8 +115,8 @@ $(document).ready(function () {
         };
 
         this.updateGameFromServer = function (gvars) {
-            console.log("game updated, Data Recieved: ", JSON.stringify(gvars));
-			console.log("locals are:                  ", JSON.stringify(game.getGameVars()));
+            //console.log("game updated, Data Recieved: ", JSON.stringify(gvars));
+			//console.log("locals are:                  ", JSON.stringify(game.getGameVars()));
 			localvars = game.getGameVars();
 
 			// hack, need to change this
@@ -213,14 +213,14 @@ $(document).ready(function () {
         $("#player1-score").text(player1score);
         $("#player2-score").text(player2score);
         $("#ball").css({
-            "top": bally + "px",
+            "top": (COURTHEIGHT - 2 * BALLRADIUS - bally) + "px",
             "left": ballx + "px"
         });
         $("#left-paddle").css({
-            "top": player1paddley + "px"
+            "top": COURTHEIGHT - PADDLEHEIGHT - player1paddley + "px"
         });
         $("#right-paddle").css({
-            "top": player2paddley + "px"
+            "top": COURTHEIGHT - PADDLEHEIGHT - player2paddley + "px"
         });
     }
 
