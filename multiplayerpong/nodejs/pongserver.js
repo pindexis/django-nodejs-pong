@@ -1,6 +1,5 @@
 var http = require('http');
 var GameLogic = require('./gamelogic.js');
-console.log(GameLogic);
 var server = http.createServer().listen(4000);
 var io = require('socket.io').listen(server);
 var cookie_reader = require('cookie');
@@ -77,7 +76,7 @@ function GameServerContext() {
 
         assert(client !== null && (client === client1 || client === client2));
 				
-		if(game == null || game.isOver())
+		if(game == null || game.getGameState() === GameLogic.GameState.OVER)
 			return;
 
         var player = (client === client1) ? game.getPlayer(1) : game.getPlayer(2);
@@ -102,14 +101,17 @@ function GameServerContext() {
         console.log("Game Started! " + client1 + " vs " + client2 );
         game = new GameLogic.Game(client1, client2);
 		game.start();
-		io.sockets.emit("startgame",JSON.stringify({client1 : client1, client2 : client2}));
+		io.sockets.emit("startgame",JSON.stringify({client1 : client1, client2 : client2, gvars:game.getGameVars()}));
 
         refreshClientsIntervalId = setInterval(updateClients, CLIENTUPDATEINTERVALL);
-		refreshGameIntervalId = setInterval(game.updateGameState, GameLogic.UPDATEINTERVALL);
+		refreshGameIntervalId = setInterval(updateGame, GameLogic.UPDATEINTERVALL);
     }
-
+	function updateGame(){
+		if(game.updateGameState())
+			updateClients();
+	}
     function updateClients() {
-        if (game.isOver()) {
+        if (game.getGameState() === GameLogic.GameState.OVER) {
             gameOver(game.getWinnerId(), " ");
         } else {
             console.log("updating players");
@@ -201,7 +203,7 @@ function makeRequestDjango(data, callback) {
     var post_data = querystring.stringify(data);
 
     var post_options = {
-        host: 'localhost',
+        host: '176.31.102.70',
         port: 3000,
         path: '/node_api/',
         method: 'POST',

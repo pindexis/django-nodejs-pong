@@ -108,7 +108,7 @@ function Ball() {
     this.reset = function () {
         x = COURTWIDTH / 2 - BALLRADIUS;
         y = COURTHEIGHT / 2 - BALLRADIUS;
-        dirR = Math.PI / 6;
+        dirR = ( Math.random() - 0.5 ) * (Math.PI / 2);
         speed = BALLSPEED;
     };
 
@@ -130,12 +130,13 @@ function Ball() {
 		}
 
     };
-
-	this.bounce =  function(angle){
-		if( (dirR % (Math.PI / 2)) >= Math.PI / 4 ) 
-			dirR = dirR + (2 * Math.PI - angle);
-		else
-			dirR = dirR + angle;	
+	
+	this.bounce =  function(horizental){
+		
+		if( horizental ) 
+			dirR = 2 * Math.PI - dirR ;
+		else //vertical
+			dirR = Math.PI - dirR;	
 		dirR = dirR % (2 * Math.PI);	
 		this.raiseSpeed();	
 	};
@@ -179,7 +180,7 @@ function Ball() {
     this.reset();
 }
 
-var GameState = { NOTSTARTED : 1, ACTIVE : 2, OVER : 4 };	
+var GameState = { NOTSTARTED : 1, ACTIVE : 2, PAUSED : 3, OVER : 4 };	
 
 function Game(player1username, player2username) {
     var ball = new Ball();
@@ -194,8 +195,18 @@ function Game(player1username, player2username) {
 		gameState = GameState.ACTIVE;
 		lastUpdate =  new Date().getTime();
 	};
-
-
+	this.pause = function(){
+		assert(gameState !== GameState.PAUSED);
+		gameState = GameState.PAUSED;
+	};
+	this.resume = function(){
+		assert(gameState !== GameState.ACTIVE);
+		gameState = GameState.ACTIVE;
+		lastUpdate =  new Date().getTime();
+	};
+	this.getGameState = function(){
+		return gameState;
+	};	
 	this.getPlayer = function(playerid){
 		return playerid === 1 ? player1 : player2;
 	};
@@ -203,7 +214,6 @@ function Game(player1username, player2username) {
 	this.getBall = function(){
 		return ball;
 	};
-
     this.getGameVars = function () {
 		assert(gameState !== GameState.NOTSTARTED);
         return {
@@ -224,9 +234,6 @@ function Game(player1username, player2username) {
         };
     };
 
-	this.isOver = function(){
-		return (gameState === GameState.OVER) ? true : false;
-	};
 	this.getWinnerId = function(){
 		assert(player1.getScore() == 11 || player2.getScore() == 11);
 		return player1.getScore() == 11 ? 1 : 2;
@@ -237,11 +244,11 @@ function Game(player1username, player2username) {
 		//assert(gameState === GameState.ACTIVE || gameState === GameState.PAUSED);
 		//assert(vars.gameState === GameState.ACTIVE || vars.gameState === GameState.PAUSED);
 		//gameState == vars.gameState
-		console.log("Current ballx= " + ball.getX() + " server ballx= " + vars.ballX); 
-		console.log("Current bally= " + ball.getY() + " server bally= " + vars.ballY);
-		console.log("Current ballR= " + ball.getDirR() + " server ballR= " + vars.ballDirR);
-		console.log("Current Player1Paddle= " + player1.getPaddleY() + " server ballx= " + vars.player1PaddleY);
-		console.log("Current Player2Paddle= " + player2.getPaddleY() + " server ballx= " + vars.player2PaddleY);
+		//console.log("Current ballx= " + ball.getX() + " server ballx= " + vars.ballX); 
+		//console.log("Current bally= " + ball.getY() + " server bally= " + vars.ballY);
+		//console.log("Current ballR= " + ball.getDirR() + " server ballR= " + vars.ballDirR);
+		//console.log("Current Player1Paddle= " + player1.getPaddleY() + " server ballx= " + vars.player1PaddleY);
+		//console.log("Current Player2Paddle= " + player2.getPaddleY() + " server ballx= " + vars.player2PaddleY);
         player1.setPlayerVars(vars.player1Score, vars.player1PaddleY, vars.player1PaddleDirY);
         player2.setPlayerVars(vars.player2Score, vars.player2PaddleY, vars.player2PaddleDirY);
         ball.setBallVars(vars.ballX, vars.ballY, vars.ballDirR, vars.ballSpeed);
@@ -265,27 +272,29 @@ function Game(player1username, player2username) {
 		ball.regularUpdate(elapsed);
 		player1.regularUpdate(elapsed);
         player2.regularUpdate(elapsed);
-		
-        if (ball.getX() <= 0)
+		var roundOver = false;
+        if (ball.getX() <= 0){
             finishRound(player2);
-        else if (ball.getX() + 2 * BALLRADIUS >= COURTWIDTH)
+			roundOver = true;
+		}else if (ball.getX() + 2 * BALLRADIUS >= COURTWIDTH) {
             finishRound(player1);
-        else {
+			roundOver = true;
+		}else {
 			var ballDirR = ball.getDirR();
             if (ball.getY() <= 0){
-                ball.bounce(Math.PI / 2 );
+                ball.bounce(true );
 				ball.setY(0);
 			}else if (ball.getY() + 2 * BALLRADIUS >= COURTHEIGHT){
-				ball.bounce(Math.PI / 2 );
+				ball.bounce(true );
 				ball.setY(COURTHEIGHT - 2 * BALLRADIUS);
 			}
 
             if (ball.checkCollision(player1.getPaddleX(), player1.getPaddleY(), PADDLEWIDTH, PADDLEHEIGHT)){
-				ball.bounce(Math.PI / 2 );
+				ball.bounce(false );
 				ball.setX(PADDLEWIDTH);
 			}
             else if (ball.checkCollision(player2.getPaddleX(), player2.getPaddleY(), PADDLEWIDTH, PADDLEHEIGHT)){
-				ball.bounce(Math.PI / 2 );
+				ball.bounce(false );
 				ball.setX(COURTWIDTH - PADDLEWIDTH - 2 * BALLRADIUS);
 			}
 
@@ -293,6 +302,7 @@ function Game(player1username, player2username) {
         }
 
 		lastUpdate = currentTime;
+		return roundOver;
     };
 	
 

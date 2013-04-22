@@ -99,6 +99,7 @@ $(document).ready(function () {
             assert(playerId != null);
             console.log("Game Started!!!");
             game = new Game(initialState.client1, initialState.client2);
+			game.setGameVars(initialState.gvars);
             game.start();
             refreshGameIntervalId = setInterval(this.updateLocalGame, UPDATEINTERVALL);
 
@@ -109,9 +110,13 @@ $(document).ready(function () {
 
 
         this.updateLocalGame = function () {		
-			game.updateGameState();
+			var roundOver = game.updateGameState();
 			var gvars = game.getGameVars();
             updateGraphics(gvars.player1Score, gvars.player2Score, gvars.ballX, gvars.ballY, gvars.player1PaddleY, gvars.player2PaddleY);
+			if(roundOver){
+				game.pause();
+				clearInterval(refreshGameIntervalId);
+			}	
         };
 
         this.updateGameFromServer = function (gvars) {
@@ -129,6 +134,10 @@ $(document).ready(function () {
 			}
             game.setGameVars(gvars);
             updateGraphics(gvars.player1Score, gvars.player2Score, gvars.ballX, gvars.ballY, gvars.player1PaddleY, gvars.player2PaddleY);
+			if(game.getGameState() === GameState.PAUSED){
+				game.resume();
+				refreshGameIntervalId = setInterval(this.updateLocalGame, UPDATEINTERVALL);
+			}	
         };
 
 
