@@ -5,9 +5,7 @@ var io = require('socket.io').listen(server);
 var cookie_reader = require('cookie');
 var querystring = require('querystring');
 
-
 var CLIENTUPDATEINTERVALL = 1000;
-
 
 // Maintain Dajngo Session Cookie in Socket.io Communication
 io.configure(function () {
@@ -26,7 +24,7 @@ var gameServerContext = new GameServerContext();
 function GameServerContext() {
 
     var refreshClientsIntervalId;
-	var refreshGameIntervalId;
+    var refreshGameIntervalId;
 
     var client1;
     var client2;
@@ -34,16 +32,15 @@ function GameServerContext() {
 
     this.clientJoined = function (clientusername, socket) {
         assert(client1 || !client2);
-		if(clientusername == null)
-			return false;
+        if (clientusername == null)
+            return false;
         else if (client1 != null && client2 != null) {
             socket.emit("connectionrefused", JSON.stringify({
                 message: "Game is Full"
             }));
             return false;
-		}
-		else if (clientusername == client1 || clientusername == client2){
-			 socket.emit("connectionrefused", JSON.stringify({
+        } else if (clientusername == client1 || clientusername == client2) {
+            socket.emit("connectionrefused", JSON.stringify({
                 message: "You're Already Playing! to test, login with another account in a new browser session, (CTRL + SHIFT + N) in chrome"
             }));
             return false;
@@ -63,53 +60,59 @@ function GameServerContext() {
 
     this.clientQuit = function clientQuit(client) {
 
-        if(client !== null && (client === client1 || client === client2))
-		    if (client1 && !client2) {
-		        client1 = null;
-		    } else if (client1 && client2) {
-		        assert(game != null);
-		        gameOver((client === client1) ? 2 : 1, "other Player Disconnected");
-		    }
+        if (client !== null && (client === client1 || client === client2))
+            if (client1 && !client2) {
+                client1 = null;
+            } else if (client1 && client2) {
+            assert(game != null);
+            gameOver((client === client1) ? 2 : 1, "other Player Disconnected");
+        }
     };
 
     this.clientMessaged = function (client, data, socket) {
 
         assert(client !== null && (client === client1 || client === client2));
-				
-		if(game == null || game.getGameState() === GameLogic.GameState.OVER)
-			return;
+
+        if (game == null || game.getGameState() === GameLogic.GameState.OVER)
+            return;
 
         var player = (client === client1) ? game.getPlayer(1) : game.getPlayer(2);
-		var clientsupdateneeded = false;
+        var clientsupdateneeded = false;
         if (data.upKey && player.DirectionUp())
             clientsupdateneeded = true;
         else if (data.downKey && player.DirectionDown())
             clientsupdateneeded = true;
-		else if (data.keyReleased && player.DirectionClear())
-			clientsupdateneeded = true;
-		else{
-			console.log("unrecognized Message from Client " + JSON.stringify(data) );
-			return;
-		}
-		if(clientsupdateneeded){
-			socket.broadcast.emit('opponentmoved',JSON.stringify(data));
-			game.updateGameState();
-		}
+        else if (data.keyReleased && player.DirectionClear())
+            clientsupdateneeded = true;
+        else {
+            console.log("unrecognized Message from Client " + JSON.stringify(data));
+            return;
+        }
+        if (clientsupdateneeded) {
+            socket.broadcast.emit('opponentmoved', JSON.stringify(data));
+            game.updateGameState();
+        }
     };
 
     function startGame() {
-        console.log("Game Started! " + client1 + " vs " + client2 );
+        console.log("Game Started! " + client1 + " vs " + client2);
         game = new GameLogic.Game(client1, client2);
-		game.start();
-		io.sockets.emit("startgame",JSON.stringify({client1 : client1, client2 : client2, gvars:game.getGameVars()}));
+        game.start();
+        io.sockets.emit("startgame", JSON.stringify({
+            client1: client1,
+            client2: client2,
+            gvars: game.getGameVars()
+        }));
 
         refreshClientsIntervalId = setInterval(updateClients, CLIENTUPDATEINTERVALL);
-		refreshGameIntervalId = setInterval(updateGame, GameLogic.UPDATEINTERVALL);
+        refreshGameIntervalId = setInterval(updateGame, GameLogic.UPDATEINTERVALL);
     }
-	function updateGame(){
-		if(game.updateGameState())
-			updateClients();
-	}
+
+    function updateGame() {
+        if (game.updateGameState())
+            updateClients();
+    }
+
     function updateClients() {
         if (game.getGameState() === GameLogic.GameState.OVER) {
             gameOver(game.getWinnerId(), " ");
@@ -118,7 +121,6 @@ function GameServerContext() {
             io.sockets.emit("gameupdate", JSON.stringify(game.getGameVars()));
         }
     }
-
 
     function gameOver(winnerid, message) {
         console.log("Game Over " + winnerid);
@@ -138,7 +140,7 @@ function GameServerContext() {
 
     function releaseRessources() {
         clearInterval(refreshClientsIntervalId);
-		clearInterval(refreshGameIntervalId);
+        clearInterval(refreshGameIntervalId);
         client1 = null;
         client2 = null;
         game = null;
@@ -146,25 +148,24 @@ function GameServerContext() {
 
 }
 
-
 io.sockets.on('connection', function (socket) {
 
     // connect to django to validate session and get username
     console.log("a client just connect");
     var clientsession = socket.handshake.cookie.sessionid;
-    if (!clientsession){
-         socket.emit("connectionrefused", JSON.stringify({
-                message: "Invalid Session, Login First"
-            }));
-		 socket.disconnect();
-            return;
-	}
+    if (!clientsession) {
+        socket.emit("connectionrefused", JSON.stringify({
+            message: "Invalid Session, Login First"
+        }));
+        socket.disconnect();
+        return;
+    }
     makeRequestDjango({
         action: "validatesession",
         session: clientsession
     }, function (username) {
         if (!username || username == "INVALID") {
-			console.log("invalid session");
+            console.log("invalid session");
             socket.emit("connectionrefused", JSON.stringify({
                 message: "Invalid Session, Login First"
             }));
@@ -194,9 +195,6 @@ io.sockets.on('connection', function (socket) {
     });
 
 });
-
-
-
 
 function makeRequestDjango(data, callback) {
 
@@ -249,7 +247,7 @@ function merge(target, source) {
     return target;
 }
 
-function assert(cond){
-	if(cond === false)
-		throw("exception in " + arguments.callee.caller.toString());
+function assert(cond) {
+    if (cond === false)
+        throw ("exception in " + arguments.callee.caller.toString());
 }
