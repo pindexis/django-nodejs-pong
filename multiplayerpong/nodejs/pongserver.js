@@ -6,8 +6,8 @@ var cookie_reader = require('cookie');
 var querystring = require('querystring');
 
 var CLIENTUPDATEINTERVALL = 1000;
-
 // Maintain Dajngo Session Cookie in Socket.io Communication
+
 io.configure(function () {
     io.set('authorization', function (data, accept) {
         if (data.headers.cookie) {
@@ -18,18 +18,14 @@ io.configure(function () {
     });
     io.set('log level', 1);
 });
-
 var gameServerContext = new GameServerContext();
 
 function GameServerContext() {
-
     var refreshClientsIntervalId;
     var refreshGameIntervalId;
-
     var client1;
     var client2;
     var game;
-
     this.clientJoined = function (clientusername, socket) {
         assert(client1 || !client2);
         if (clientusername == null)
@@ -57,9 +53,7 @@ function GameServerContext() {
             return true;
         }
     };
-
     this.clientQuit = function clientQuit(client) {
-
         if (client !== null && (client === client1 || client === client2))
             if (client1 && !client2) {
                 client1 = null;
@@ -68,14 +62,10 @@ function GameServerContext() {
             gameOver((client === client1) ? 2 : 1, "other Player Disconnected");
         }
     };
-
     this.clientMessaged = function (client, data, socket) {
-
         assert(client !== null && (client === client1 || client === client2));
-
         if (game == null || game.getGameState() === GameLogic.GameState.OVER)
             return;
-
         var player = (client === client1) ? game.getPlayer(1) : game.getPlayer(2);
         var clientsupdateneeded = false;
         if (data.upKey && player.DirectionUp())
@@ -103,7 +93,6 @@ function GameServerContext() {
             client2: client2,
             gvars: game.getGameVars()
         }));
-
         refreshClientsIntervalId = setInterval(updateClients, CLIENTUPDATEINTERVALL);
         refreshGameIntervalId = setInterval(updateGame, GameLogic.UPDATEINTERVALL);
     }
@@ -124,12 +113,10 @@ function GameServerContext() {
 
     function gameOver(winnerid, message) {
         console.log("Game Over " + winnerid);
-
         io.sockets.emit("gameover", JSON.stringify({
             winnerid: winnerid,
             message: message
         }));
-
         makeRequestDjango({
             action: "gameover",
             winner: winnerid === 1 ? client1 : client2,
@@ -145,11 +132,8 @@ function GameServerContext() {
         client2 = null;
         game = null;
     }
-
 }
-
 io.sockets.on('connection', function (socket) {
-
     // connect to django to validate session and get username
     console.log("a client just connect");
     var clientsession = socket.handshake.cookie.sessionid;
@@ -184,22 +168,16 @@ io.sockets.on('connection', function (socket) {
                     console.log('Invalid JSON: ' + message.utf8Data);
                     return;
                 }
-
             });
-
             socket.on('disconnect', function (socket) {
                 gameServerContext.clientQuit(username);
             });
         }
-
     });
-
 });
 
 function makeRequestDjango(data, callback) {
-
     var post_data = querystring.stringify(data);
-
     var post_options = {
         host: '176.31.102.70',
         port: 3000,
@@ -218,12 +196,9 @@ function makeRequestDjango(data, callback) {
             });
         }
     });
-
     post_req.write(post_data);
     post_req.end();
-
 }
-
 /* merge two objects, from https://gist.github.com/svlasov-gists/2383751 */
 function merge(target, source) {
     /* Merges two (or more) objects,
